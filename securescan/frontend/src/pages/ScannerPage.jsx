@@ -52,9 +52,15 @@ export default function ScannerPage() {
   }, [urlParamTarget]);
 
   const handleStartScan = async (domainToScan) => {
-    const domain = (domainToScan || targetDomain).trim();
-    if (!domain) return;
+    let raw = (domainToScan || targetDomain || '').trim();
+    if (!raw) return;
 
+    // Normalize input: strip any redundant http(s):// or leading/trailing spaces & slashes
+    let clean = raw.replace(/^https?:\/\//i, '').trim();
+    clean = clean.replace(/^[/\s]+/, '').replace(/[/\s]+$/, '');
+    if (!clean) return;
+
+    setTargetDomain(clean);
     setError(null);
     setIsScanning(true);
     setProgress(15);
@@ -63,10 +69,7 @@ export default function ScannerPage() {
     setFindings([]);
 
     try {
-      const fullUrl = domain.startsWith('http://') || domain.startsWith('https://')
-        ? domain
-        : `https://${domain}`;
-
+      const fullUrl = `https://${clean}`;
       const res = await api.post('/api/scans', { target_url: fullUrl });
       const scanId = res.data.id;
 
@@ -98,13 +101,16 @@ export default function ScannerPage() {
             clearTimeout(t3);
             clearInterval(pollInterval);
             setIsScanning(false);
-            setProgress(100);
-            setPhaseText('Assessment Completed');
-            setScanResult(checkRes.data);
 
             if (checkRes.data.status === 'failed') {
+              setProgress(0);
+              setPhaseText('');
+              setScanResult(null);
               setError(checkRes.data.error_message || 'Assessment failed. Check target domain accessibility.');
             } else {
+              setProgress(100);
+              setPhaseText('Assessment Completed');
+              setScanResult(checkRes.data);
               // Fetch genuine findings from backend
               const findingsRes = await api.get(`/api/scans/${scanId}/findings`);
               if (findingsRes.data?.findings) {
@@ -116,22 +122,34 @@ export default function ScannerPage() {
           // Continue polling
         }
 
-        if (attempts > 25) {
+        if (attempts > 30) {
           clearTimeout(t1);
           clearTimeout(t2);
           clearTimeout(t3);
           clearInterval(pollInterval);
           setIsScanning(false);
+          setProgress(0);
+          setPhaseText('');
           setError('Scan timed out. The remote server may be slow or blocking inbound diagnostic probes.');
         }
       }, 1000);
     } catch (err) {
       setIsScanning(false);
       setProgress(0);
-      setError(
-        err.response?.data?.detail ||
-        'Validation failed: Private RFC 1918 IPs, loopbacks, and invalid hostnames are blocked for security.'
-      );
+      setPhaseText('');
+      if (!err.response) {
+        setError(
+          'Cannot connect to backend server. Make sure the FastAPI service is running on http://127.0.0.1:8000.'
+        );
+      } else if (err.response.status === 401) {
+        setError('Authentication required: please log in or fill demo credentials to initiate scans.');
+      } else {
+        setError(
+          err.response?.data?.detail ||
+          err.response?.data?.error_message ||
+          'Validation error: Unable to initiate scan. Private IP addresses and invalid schemes are blocked.'
+        );
+      }
     }
   };
 
@@ -200,7 +218,13 @@ export default function ScannerPage() {
               <input
                 type="text"
                 value={targetDomain}
-                onChange={(e) => setTargetDomain(e.target.value)}
+                onChange={(e) => {
+                  let val = e.target.value;
+                  if (/^https?:\/\//i.test(val.trim())) {
+                    val = val.trim().replace(/^https?:\/\//i, '');
+                  }
+                  setTargetDomain(val);
+                }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();

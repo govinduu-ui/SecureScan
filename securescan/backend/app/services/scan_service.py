@@ -78,7 +78,7 @@ async def run_scan(scan_id: str) -> None:
             {
                 "$set": {
                     "status": "failed",
-                    "error_message": f"Target validation failed: {str(ve)}",
+                    "error_message": str(ve),
                     "completed_at": datetime.now(timezone.utc),
                 }
             },

@@ -68,43 +68,67 @@ def _is_private_ip(ip_str: str) -> bool:
 def resolve_hostname(hostname: str) -> List[str]:
     """Resolve a hostname to its IP addresses using DNS.
 
+    Uses native OS socket.getaddrinfo and socket.gethostbyname_ex first for reliable
+    resolution across all Windows/Linux/macOS network adapters, with dnspython as a secondary resolver.
+
     Raises:
         ValidationError: If DNS resolution fails.
     """
+    ips: List[str] = []
+
+    # 1. Native OS getaddrinfo (resolves via system DNS stack on Windows/Linux)
+    try:
+        addr_info = socket.getaddrinfo(hostname, None, socket.AF_UNSPEC, socket.SOCK_STREAM)
+        for item in addr_info:
+            ip = item[4][0]
+            if ip and ip not in ips:
+                ips.append(ip)
+    except Exception:
+        pass
+
+    # 2. Native OS gethostbyname_ex as additional fallback
+    if not ips:
+        try:
+            _, _, host_ips = socket.gethostbyname_ex(hostname)
+            for ip in host_ips:
+                if ip and ip not in ips:
+                    ips.append(ip)
+        except Exception:
+            pass
+
+    if ips:
+        return ips
+
+    # 3. Secondary fallback via dnspython with explicit public nameservers
     try:
         resolver = dns.resolver.Resolver()
+        resolver.nameservers = ["8.8.8.8", "1.1.1.1", "8.8.4.4", "1.0.0.1"]
         resolver.timeout = 5
         resolver.lifetime = 5
 
-        ips = []
         # Try A records
         try:
             answers = resolver.resolve(hostname, "A")
             ips.extend([str(rdata) for rdata in answers])
-        except (dns.resolver.NoAnswer, dns.resolver.NXDOMAIN):
+        except Exception:
             pass
 
         # Try AAAA records
         try:
             answers = resolver.resolve(hostname, "AAAA")
             ips.extend([str(rdata) for rdata in answers])
-        except (dns.resolver.NoAnswer, dns.resolver.NXDOMAIN):
+        except Exception:
             pass
 
-        if not ips:
-            raise ValidationError(f"DNS resolution failed for {hostname}: no records found")
+        if ips:
+            return list(dict.fromkeys(ips))
+    except Exception:
+        pass
 
-        return ips
-    except dns.resolver.NXDOMAIN:
-        raise ValidationError(f"Domain {hostname} does not exist")
-    except dns.resolver.NoNameservers:
-        raise ValidationError(f"No nameservers available for {hostname}")
-    except dns.exception.Timeout:
-        raise ValidationError(f"DNS resolution timed out for {hostname}")
-    except ValidationError:
-        raise
-    except Exception as e:
-        raise ValidationError(f"DNS resolution error for {hostname}: {str(e)}")
+    if not ips:
+        raise ValidationError(f"DNS resolution failed for '{hostname}'. Please check domain spelling and network connectivity.")
+
+    return list(dict.fromkeys(ips))
 
 
 def validate_url(url: str) -> Tuple[str, str]:
@@ -125,8 +149,17 @@ def validate_url(url: str) -> Tuple[str, str]:
     Raises:
         ValidationError: If the URL fails any validation check.
     """
+    clean_url = url.strip()
+
+    # Normalize internal spaces (e.g. 'https:// www.example.com')
+    if "://" in clean_url:
+        scheme, rest = clean_url.split("://", 1)
+        clean_url = f"{scheme.strip().lower()}://{rest.strip()}"
+    elif not clean_url.startswith(("http://", "https://", "ftp://", "file://", "gopher://")):
+        clean_url = f"https://{clean_url}"
+
     # Parse URL
-    parsed = urlparse(url)
+    parsed = urlparse(clean_url)
 
     # Restrict protocols
     if parsed.scheme not in ("http", "https"):
@@ -150,7 +183,7 @@ def validate_url(url: str) -> Tuple[str, str]:
             raise ValidationError(
                 f"Blocked IP address: {hostname}. Private, loopback, and reserved IPs are not allowed."
             )
-        return url, hostname
+        return clean_url, hostname
     except ValueError:
         pass  # Not a raw IP, proceed with DNS resolution
 
@@ -162,7 +195,7 @@ def validate_url(url: str) -> Tuple[str, str]:
                 f"Domain {hostname} resolves to private/reserved IP {ip}. Scanning is not allowed."
             )
 
-    return url, hostname
+    return clean_url, hostname
 
 
 def validate_redirect_url(url: str) -> bool:
