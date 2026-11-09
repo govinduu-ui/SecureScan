@@ -1,0 +1,43 @@
+# Environment variables & secrets (CRITICAL: NEVER COMMIT)
+.env
+*.env
+**/.env
+**/.env.local
+**/.env.*.local
+securescan/backend/.env
+
+# Python caches, virtual environments & test artifacts
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+**/.pytest_cache/
+.coverage
+htmlcov/
+venv/
+env/
+.venv/
+
+# Node & Frontend dependencies & build artifacts
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Generated PDF reports storage (retain folder structure via .gitkeep)
+reports_storage/*.pdf
+**/reports_storage/*.pdf
+*.pdf
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo

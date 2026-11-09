@@ -1,0 +1,160 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html {
+    color-scheme: light;
+  }
+
+  body {
+    @apply font-sans;
+    background-color: #F8FAFC;
+    color: #0F172A;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+
+  /* Clean light theme scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #CBD5E1;
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #94A3B8;
+  }
+
+  /* Focus ring */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-indigo-500/30 ring-offset-2 ring-offset-white;
+  }
+
+  /* Selection */
+  ::selection {
+    background: rgba(79, 70, 229, 0.15);
+    color: #0F172A;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-cyber-raised border border-cyber-border rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all;
+  }
+
+  .input-field {
+    @apply w-full bg-white border border-cyber-border rounded-lg px-3.5 py-2 text-sm text-cyber-text
+           placeholder:text-cyber-text-muted
+           focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20
+           transition-all duration-150;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold
+           bg-indigo-600 text-white rounded-lg
+           hover:bg-indigo-700 shadow-sm active:scale-[0.98]
+           disabled:opacity-50 disabled:cursor-not-allowed
+           transition-all duration-150;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium
+           bg-white text-cyber-text border border-cyber-border rounded-lg
+           hover:bg-slate-50 hover:border-slate-300 shadow-xs active:scale-[0.98]
+           disabled:opacity-50 disabled:cursor-not-allowed
+           transition-all duration-150;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium
+           text-cyber-text-secondary rounded-lg
+           hover:bg-slate-100 hover:text-cyber-text
+           disabled:opacity-50 disabled:cursor-not-allowed
+           transition-colors duration-150;
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium
+           bg-rose-50 text-rose-700 border border-rose-200 rounded-lg
+           hover:bg-rose-100 active:scale-[0.98]
+           disabled:opacity-50 disabled:cursor-not-allowed
+           transition-all duration-150;
+  }
+
+  .label {
+    @apply block text-sm font-medium text-cyber-text-secondary mb-1.5;
+  }
+
+  .mono {
+    @apply font-mono text-sm;
+  }
+
+  .status-label {
+    @apply font-mono text-xs font-semibold uppercase tracking-wider;
+  }
+}
+
+@layer utilities {
+  .glow-cyan {
+    box-shadow: 0 1px 3px rgba(2, 132, 199, 0.15);
+  }
+
+  /* Accessibility & Preferences classes */
+  html.reduce-motion *,
+  html.reduce-motion *::before,
+  html.reduce-motion *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  html.high-contrast {
+    filter: contrast(112%);
+  }
+
+  html.high-contrast .border-slate-200,
+  html.high-contrast .border-slate-100,
+  html.high-contrast .border-cyber-border {
+    border-color: #64748B !important;
+  }
+
+  /* Density attributes */
+  html[data-density='compact'] .py-3\.5 {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+  }
+
+  html[data-density='compact'] .p-5 {
+    padding: 0.875rem !important;
+  }
+
+  html[data-density='comfortable'] .py-3\.5 {
+    padding-top: 1.125rem !important;
+    padding-bottom: 1.125rem !important;
+  }
+
+  html[data-density='comfortable'] .p-5 {
+    padding: 1.625rem !important;
+  }
+
+  /* Monospace font selection */
+  html[data-code-font='system'] code,
+  html[data-code-font='system'] pre,
+  html[data-code-font='system'] .font-mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+  }
+}
