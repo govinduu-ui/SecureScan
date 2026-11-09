@@ -1,6 +1,6 @@
 from pydantic_settings import BaseSettings
-from pydantic import ConfigDict
-from typing import List
+from pydantic import ConfigDict, field_validator
+from typing import List, Any
 import json
 import os
 
@@ -34,6 +34,26 @@ class Settings(BaseSettings):
         "http://localhost:4173",
         "http://127.0.0.1:4173",
     ]
+
+    @field_validator("CORS_ORIGINS", mode="before")
+    @classmethod
+    def assemble_cors_origins(cls, v: Any) -> List[str]:
+        if isinstance(v, str):
+            v_stripped = v.strip()
+            if v_stripped.startswith("[") and v_stripped.endswith("]"):
+                try:
+                    return json.loads(v_stripped)
+                except Exception:
+                    pass
+            return [origin.strip() for origin in v_stripped.split(",") if origin.strip()]
+        elif isinstance(v, list):
+            return v
+        return [
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+        ]
 
     # Rate Limiting
     RATE_LIMIT_PER_MINUTE: int = 60

@@ -1,0 +1,39 @@
+services:
+  # 1. Backend FastAPI Service
+  - type: web
+    name: securescan-backend
+    runtime: python
+    plan: free
+    rootDir: securescan/backend
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: APP_NAME
+        value: SecureScan
+      - key: DEBUG
+        value: "false"
+      - key: DATABASE_PROVIDER
+        value: auto
+      - key: JWT_SECRET_KEY
+        generateValue: true
+
+  # 2. Frontend React / Vite Static Site
+  - type: web
+    name: securescan-frontend
+    runtime: static
+    plan: free
+    rootDir: securescan/frontend
+    buildCommand: "npm install && npm run build"
+    staticPublishPath: "./dist"
+    routes:
+      - type: rewrite
+        source: "/*"
+        destination: "/index.html"
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: securescan-backend
+          property: url
