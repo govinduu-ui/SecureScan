@@ -79,6 +79,8 @@ app.include_router(reports_router, prefix="/api/reports", tags=["Reports"])
 app.include_router(analytics_router, prefix="/api/analytics", tags=["Analytics"])
 
 
+@app.get("/healthz", tags=["Health"])
+@app.get("/health", tags=["Health"])
 @app.get("/api/health", tags=["Health"])
 async def health_check():
     cloud_status = await cloud_storage.get_storage_status()
