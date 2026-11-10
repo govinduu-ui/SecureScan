@@ -142,7 +142,7 @@ export default function ScannerPage() {
           'Cannot connect to backend server. Make sure the FastAPI service is running on http://127.0.0.1:8000.'
         );
       } else if (err.response.status === 401) {
-        setError('Authentication required: please log in or fill demo credentials to initiate scans.');
+        setError('Authentication required: please sign in to initiate scans.');
       } else {
         setError(
           err.response?.data?.detail ||
