@@ -83,6 +83,18 @@ app.include_router(reports_router, prefix="/api/reports", tags=["Reports"])
 app.include_router(analytics_router, prefix="/api/analytics", tags=["Analytics"])
 
 
+@app.get("/", tags=["Root"])
+async def root():
+    return {
+        "service": settings.APP_NAME,
+        "version": settings.APP_VERSION,
+        "status": "operational",
+        "docs_url": "/docs",
+        "health_url": "/api/health",
+        "message": "SecureScan Enterprise API is online. Connect the frontend web application to interact with the scanner platform.",
+    }
+
+
 @app.get("/healthz", tags=["Health"])
 @app.get("/health", tags=["Health"])
 @app.get("/api/health", tags=["Health"])
