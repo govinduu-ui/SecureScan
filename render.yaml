@@ -37,3 +37,4 @@ services:
           type: web
           name: securescan-backend
           property: url
+

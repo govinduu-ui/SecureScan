@@ -1,6 +1,6 @@
 from pydantic_settings import BaseSettings
 from pydantic import ConfigDict, field_validator
-from typing import List, Any
+from typing import List, Any, Union
 import json
 import os
 
@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     DEBUG: bool = False
 
     # CORS
-    CORS_ORIGINS: List[str] = [
+    CORS_ORIGINS: Union[List[str], str] = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "http://localhost:5173",
@@ -40,9 +40,13 @@ class Settings(BaseSettings):
     def assemble_cors_origins(cls, v: Any) -> List[str]:
         if isinstance(v, str):
             v_stripped = v.strip()
+            if v_stripped == "*":
+                return ["*"]
             if v_stripped.startswith("[") and v_stripped.endswith("]"):
                 try:
-                    return json.loads(v_stripped)
+                    parsed = json.loads(v_stripped)
+                    if isinstance(parsed, list):
+                        return parsed
                 except Exception:
                     pass
             return [origin.strip() for origin in v_stripped.split(",") if origin.strip()]
